@@ -9,4 +9,6 @@ AltX prioritizes safety, employing measures to ensure it remains undetectable by
 
 Whether you're a casual player or a dedicated gamer, AltX is your trusted companion for navigating the world of Roblox with ease and confidence.
 
-# Download under Release
+# [Release](https://github.com/Keppivv/AltX/releases/):
+
+You can find the latest version to download in Release page.
