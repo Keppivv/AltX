@@ -7,8 +7,8 @@ AltX is an application inspired by the functionality of Alt1 toolkit for Runesca
 AFK Timer: Never miss a beat with AltX's AFK timer, keeping track of your inactivity to help you manage your gaming sessions effectively.
 AltX prioritizes safety, employing measures to ensure it remains undetectable by anti-cheat systems, such as Byfron Anti Cheat, providing peace of mind for users concerned about account security.
 
-Whether you're a casual player or a dedicated gamer, AltX is your trusted companion for navigating the world of Roblox with ease and confidence.
-
 # [Download](https://github.com/Keppivv/AltX/releases/):
 
 You can find the latest version to download in Release page.
+# 
+Whether you're a casual player or a dedicated gamer, AltX is your trusted companion for navigating the world of Roblox with ease and confidence.
