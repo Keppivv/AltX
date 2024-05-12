@@ -1,18 +1,211 @@
-# Source code yet to be released
+import math
+import string
+import threading
+from threading import Thread
+from pynput import mouse
+import pyautogui
+import pystray
+from pystray import Icon, Menu, MenuItem
+from PIL import Image
+import time
+import pygetwindow
+import psutil
+import win32gui
+import win32process
+import tkinter as tk
+from tkinter import ttk
 
-Instructions:
-  Roblox game client name has to be "Roblox" (cAseSenSiTiVe)
-  Left click system tray icon -> Settings -> AFK Check (Toggle, Indicated by native Windows notification)
+
+def quits():
+    global roblox_hwnd
+    global shouldUpdate
+    global icon
+    global mouse_listener
+    mouse_listener.stop()
+    shouldUpdate = False
+    time.sleep(1)
+    win32gui.SetWindowText(roblox_hwnd, "Roblox")
+    time.sleep(0.3)
+    icon.stop()
+    time.sleep(0.99)
+    quit()
 
 
--- -- -- --
-Native Windows notification appears after 16 minutes of inactivity, automatically resets after that.
-While "Roblox" window is focused, and mouse click acitvity is detected -> Reset timer
--- -- -- --
+def settings():
+    bg = "light green"
+    root = tk.Tk()
+    root.title("◄Settings►")
+    root.geometry("170x200+150+150")
+    root.attributes("-toolwindow", True)
+    root.attributes("-topmost", True)
+    root.config(background=bg)
+    cont = tk.Frame(root, border=1, borderwidth=2, background=bg)
+    cont.pack(anchor="w")
+    labeltext = "Warn after x Minutes of AFK"
+    label1 = tk.Label(cont, text=labeltext, background=bg, font=("Helvetica", "8", "bold"))
+    label1.pack(anchor="w")
 
-TODO:
-  Config.ini for inactivity delay and Client name.
-  New Client Detection with process.
-  Move Client Name detection to Legacy/Failsafe (using pygetwindow).
-  Add support for multi-instance AFK Detection.
-  Add Optional Multi-instance Mutex creation. (Experimental, Byfron might see it as a third party modification)
+    def command(com):
+        labeltext = "Warn after " + com + " minutes of AFK"
+        if slider1.get() == 0:
+            labeltext = "[Disabled]"
+            label1.config(foreground="red")
+            label1.config(text=labeltext)
+        if slider1.get() == 1:
+            labeltext = "Warn after a minute of AFK\nRecommended: 15 Minutes"
+            label1.config(foreground="red")
+            label1.config(text=labeltext)
+        if slider1.get() >= 2 and slider1.get() <= 5:
+            labeltext = labeltext + "\nRecommended: 15 Minutes"
+            label1.config(foreground="red")
+            label1.config(text=labeltext)
+        if slider1.get() >= 6:
+            label1.config(foreground="black")
+            label1.config(text=labeltext)
+
+    def command1():
+        if normalnumber.get() == 1:
+            label2.config(text="[Sounds] [ON]")
+        else:
+            label2.config(text="[Sounds] [OFF]")
+
+    normalnumber = tk.IntVar(value=1, name="value")
+    slider1 = tk.Scale(cont, orient="horizontal", background=bg, from_=0, to=20, command=command)
+    slider1.config(width=10, length=200, showvalue=False)
+    slider1.set(15)
+    slider1.pack(anchor="w")
+    label2 = tk.Label(cont, text="[Sounds] [ON]", background=bg)
+    label2.pack(anchor="w")
+    soundbox1 = tk.Checkbutton(cont, background=bg, command=command1, onvalue=1, offvalue=0, variable=normalnumber)
+    soundbox1.pack(anchor="w")
+    closebtn = tk.Button(root, command=root.destroy, text="Save & Exit Settings", background=bg)
+    closebtn.pack(side="bottom", pady=5)
+    root.mainloop()
+
+
+altx = "AltX"
+quitText = "Quit"
+start_time = math.floor(time.time())
+image = Image.open("icon.jpg")
+menu = Menu(MenuItem(quitText, quits), MenuItem("Settings", settings))
+icon = Icon(altx, image, altx, menu)
+roblox_hwnd = None
+roblox_pid = None
+shouldUpdate = True
+rblxFound = False
+roblox_name = "Roblox Logout: [09:39]"
+warntime = 15
+
+
+def target():
+    icon.run()
+
+
+def findRoblox():
+    global roblox_pid
+    global roblox_hwnd
+    global rblxFound
+    for process in psutil.process_iter(['pid', 'name']):
+        if process.name() == "RobloxPlayerBeta.exe":
+            roblox_pid = process.pid
+            windows = pygetwindow.getAllWindows()
+            xid = 0
+            for x in windows:
+                if x.title == "Roblox":
+                    lister = str(windows).split()
+                    lister = lister[xid].strip("Win32Window")
+                    lister = lister.strip("(hWnd=")
+                    lister = lister.strip("),")
+                    roblox_hwnd = lister
+                if str(x.title).find("Roblox Logout: ") == 0:
+                    lister = str(windows).split()
+                    lister = lister[xid].strip("Win32Window")
+                    lister = lister.strip("(hWnd=")
+                    lister = lister.strip("),")
+                    roblox_hwnd = lister
+                xid = xid + 1
+            print("PID:", roblox_pid)
+            print("hWnd:", roblox_hwnd)
+            print("Process:", process.name())
+            rblxFound = True
+    time.sleep(1)
+    if not rblxFound:
+        findRoblox()
+
+
+def writeRoblox():
+    global shouldUpdate
+    global roblox_pid
+    global roblox_hwnd
+    global roblox_name
+    global start_time
+    global warntime
+    maxtime = int(60 * 20)
+    while shouldUpdate:
+        currentTime = math.floor(time.time())
+        timeleft = (maxtime - math.floor(currentTime - start_time))
+        minute = math.floor(timeleft / 60)
+        second = math.floor(timeleft - (minute * 60))
+        minute = str(minute)
+        second = str(second)
+        if len(minute) == 1:
+            minute = "0" + minute
+        if len(second) == 1:
+            second = "0" + second
+        roblox_name = "Roblox Logout: [" + str(minute) + ":" + str(second) + "]"
+        win32gui.SetWindowText(roblox_hwnd, roblox_name)
+        time.sleep(0.5)
+
+
+def detector(mouse_position_x, mouse_position_y, button, is_pressed):
+    global shouldUpdate
+    t_time = int(math.floor(time.time()))
+    if not shouldUpdate:
+        return
+
+    def unit():
+        global start_time
+        global roblox_hwnd
+        if not str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
+            return
+        if not shouldUpdate:
+            return
+        time.sleep(1)
+        if not str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
+            return
+        if not shouldUpdate:
+            return
+        time.sleep(1)
+        if not shouldUpdate:
+            return
+        if not str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
+            return
+        if str(button) == "Button.left":
+            if is_pressed:
+                if str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
+                    start_time = t_time
+        if str(button) == "Button.right":
+            if is_pressed:
+                if str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
+                    start_time = t_time
+
+    thread = threading.Thread(target=unit)
+    thread.start()
+
+
+mouse_listener = mouse.Listener(on_click=detector)
+
+
+def starter():
+    thread = Thread(target=target)
+    thread.start()
+    findRoblox()
+    global rblxFound
+    global mouse_listener
+    while not rblxFound:
+        time.sleep(0.2)
+    mouse_listener.start()
+    writeRoblox()
+
+
+starter()
