@@ -33,6 +33,8 @@ def quits():
 
 
 def settings():
+    global warntime
+    global sounds_enabled
     bg = "light green"
     root = tk.Tk()
     root.title("◄Settings►")
@@ -71,6 +73,8 @@ def settings():
             label2.config(text="[Sounds] [OFF]")
 
     def command2():
+        global warntime
+        global sounds_enabled
         wrn = int(slider1.get())
         enbld = int(normalnumber.get())
         if enbld == 0:
@@ -83,47 +87,42 @@ def settings():
             f.write("Warntime = " + str(wrn) + "\n")
             f.write("Volume = " + str(volume) + "\n")
             f.write("Sounds = " + str(enbld) + "\n")
+            warntime = int(wrn)
+            sounds_enabled = enbld
             f.close()
         time.sleep(0.2)
         root.destroy()
-    normalnumber = tk.IntVar(value=1, name="value")
+    val = 0
+    if sounds_enabled:
+        val = 1
+    normalnumber = tk.IntVar(value=int(val), name="value")
     slider1 = tk.Scale(cont, orient="horizontal", background=bg, from_=0, to=20, command=command)
     slider1.config(width=10, length=200, showvalue=False)
-    slider1.set(15)
+    slider1.set(int(warntime))
     slider1.pack(anchor="w")
     label2 = tk.Label(cont, text="[Sounds] [ON]", background=bg)
     label2.pack(anchor="w")
     soundbox1 = tk.Checkbutton(cont, background=bg, command=command1, onvalue=1, offvalue=0, variable=normalnumber)
     soundbox1.pack(anchor="w")
+    if sounds_enabled:
+        soundbox1.select()
+    else:
+        soundbox1.deselect()
+        label2.config(text="[Sounds] [OFF]")
     closebtn = tk.Button(root, command=command2, text="Save & Exit Settings", background=bg)
     closebtn.pack(side="bottom", pady=5)
-    with open("Settings.ini", "r") as f:
-        for x in f.readlines():
-            if x[0] != "#":
-                x = x.rstrip("\n")
-                if x.find("Warntime = ") == 0:
-                    x = x.strip("Warntime = ")
-                    time.sleep(0.1)
-                    slider1.set(x)
-                if x.find("Sounds = ") == 0:
-                    x = x.strip("Sounds = ")
-                    x = bool(x)
-                    if x:
-                        normalnumber.set(1)
-                        soundbox1.select()
-                    else:
-                        normalnumber.set(0)
-                        soundbox1.deselect()
-        f.close()
-
     root.mainloop()
+
+def betterSettings():
+    thread = threading.Thread(target=settings)
+    thread.start()
 
 
 altx = "AltX"
 quitText = "Quit"
 start_time = math.floor(time.time())
 image = Image.open("icon.jpg")
-menu = Menu(MenuItem(quitText, quits), MenuItem("Settings", settings))
+menu = Menu(MenuItem(quitText, quits), MenuItem("Settings", betterSettings))
 icon = Icon(altx, image, altx, menu)
 roblox_hwnd = None
 roblox_pid = None
@@ -165,7 +164,10 @@ def create_settings_file():
                         volume = float(file)
                     if file.find("Sounds = ") == 0:
                         file = file.strip("Sounds = ")
-                        sounds_enabled = bool(file)
+                        if file == "False":
+                            sounds_enabled = False
+                        else:
+                            sounds_enabled = True
                 index += 1
     print("Warntime:", warntime, "Minutes")
     print("Volume:", volume)
