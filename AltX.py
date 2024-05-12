@@ -11,6 +11,7 @@ import time
 import pygetwindow
 import psutil
 import win32gui
+import os
 import win32process
 import tkinter as tk
 from tkinter import ttk
@@ -69,6 +70,22 @@ def settings():
         else:
             label2.config(text="[Sounds] [OFF]")
 
+    def command2():
+        wrn = int(slider1.get())
+        enbld = int(normalnumber.get())
+        if enbld == 0:
+            enbld = False
+        else:
+            enbld = True
+        with open("Settings.ini", "w") as f:
+            f.write("# Settings file, you can manually change settings here, applied on launch\n")
+            f.write("# By deleting this file you will return to default settings\n")
+            f.write("Warntime = " + str(wrn) + "\n")
+            f.write("Volume = " + str(volume) + "\n")
+            f.write("Sounds = " + str(enbld) + "\n")
+            f.close()
+        time.sleep(0.2)
+        root.destroy()
     normalnumber = tk.IntVar(value=1, name="value")
     slider1 = tk.Scale(cont, orient="horizontal", background=bg, from_=0, to=20, command=command)
     slider1.config(width=10, length=200, showvalue=False)
@@ -78,8 +95,27 @@ def settings():
     label2.pack(anchor="w")
     soundbox1 = tk.Checkbutton(cont, background=bg, command=command1, onvalue=1, offvalue=0, variable=normalnumber)
     soundbox1.pack(anchor="w")
-    closebtn = tk.Button(root, command=root.destroy, text="Save & Exit Settings", background=bg)
+    closebtn = tk.Button(root, command=command2, text="Save & Exit Settings", background=bg)
     closebtn.pack(side="bottom", pady=5)
+    with open("Settings.ini", "r") as f:
+        for x in f.readlines():
+            if x[0] != "#":
+                x = x.rstrip("\n")
+                if x.find("Warntime = ") == 0:
+                    x = x.strip("Warntime = ")
+                    time.sleep(0.1)
+                    slider1.set(x)
+                if x.find("Sounds = ") == 0:
+                    x = x.strip("Sounds = ")
+                    x = bool(x)
+                    if x:
+                        normalnumber.set(1)
+                        soundbox1.select()
+                    else:
+                        normalnumber.set(0)
+                        soundbox1.deselect()
+        f.close()
+
     root.mainloop()
 
 
@@ -95,11 +131,45 @@ shouldUpdate = True
 rblxFound = False
 roblox_name = "Roblox Logout: [09:39]"
 warntime = 15
-
+volume = 0.5
+sounds_enabled = False
 
 def target():
     icon.run()
 
+
+def create_settings_file():
+    global warntime
+    global volume
+    global sounds_enabled
+    if not os.path.exists("Settings.ini"):
+        with open("Settings.ini", "w") as f:
+            f.write("# Settings file, you can manually change settings here, applied on launch\n")
+            f.write("# By deleting this file you will return to default settings\n")
+            f.write("Warntime = " + str(warntime) + "\n")
+            f.write("Volume = " + str(volume) + "\n")
+            f.write("Sounds = " + str(sounds_enabled) + "\n")
+            f.close()
+    if os.path.exists("Settings.ini"):
+        with open("Settings.ini", "r") as f:
+            filestring = f.readlines()
+            index = 0
+            while index < len(filestring):
+                if str(filestring[index])[0] != "#" and len(str(filestring[index])) >= 3:
+                    file = filestring[index].rstrip("\n")
+                    if file.find("Warntime = ") == 0:
+                        file = file.strip("Warntime = ")
+                        warntime = int(file)
+                    if file.find("Volume = ") == 0:
+                        file = file.strip("Volume = ")
+                        volume = float(file)
+                    if file.find("Sounds = ") == 0:
+                        file = file.strip("Sounds = ")
+                        sounds_enabled = bool(file)
+                index += 1
+    print("Warntime:", warntime, "Minutes")
+    print("Volume:", volume)
+    print("Sounds:", sounds_enabled)
 
 def findRoblox():
     global roblox_pid
@@ -198,6 +268,7 @@ mouse_listener = mouse.Listener(on_click=detector)
 
 
 def starter():
+    create_settings_file()
     thread = Thread(target=target)
     thread.start()
     thread2 = threading.Thread(target=findRoblox)
