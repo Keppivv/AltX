@@ -130,7 +130,8 @@ def findRoblox():
             rblxFound = True
     time.sleep(1)
     if not rblxFound:
-        findRoblox()
+        thread = threading.Thread(target=findRoblox)
+        thread.start()
 
 
 def writeRoblox():
@@ -199,7 +200,8 @@ mouse_listener = mouse.Listener(on_click=detector)
 def starter():
     thread = Thread(target=target)
     thread.start()
-    findRoblox()
+    thread2 = threading.Thread(target=findRoblox)
+    thread2.start()
     global rblxFound
     global mouse_listener
     while not rblxFound:
