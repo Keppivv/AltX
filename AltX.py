@@ -227,7 +227,7 @@ def writeRoblox():
             second = "0" + second
         roblox_name = "Roblox Logout: [" + str(minute) + ":" + str(second) + "]"
         win32gui.SetWindowText(roblox_hwnd, roblox_name)
-        time.sleep(0.5)
+        time.sleep(1)
 
 
 def detector(mouse_position_x, mouse_position_y, button, is_pressed):
@@ -243,12 +243,12 @@ def detector(mouse_position_x, mouse_position_y, button, is_pressed):
             return
         if not shouldUpdate:
             return
-        time.sleep(1)
+        time.sleep(0.225)
         if not str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
             return
         if not shouldUpdate:
             return
-        time.sleep(1)
+        time.sleep(0.225)
         if not shouldUpdate:
             return
         if not str(roblox_hwnd) == str(win32gui.GetForegroundWindow()):
